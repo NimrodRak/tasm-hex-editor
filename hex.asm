@@ -1,7 +1,7 @@
 IDEAL
 MODEL small
 STACK 100h
-
+; copy from bmp now
 DATASEG
 
 compl		  db 1 dup (0)
