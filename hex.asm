@@ -8,10 +8,10 @@ compl		  db 1 dup (0)
 buffer		  db 132 dup (?)
 bytes_read	  db 1 dup (0)
 hex_digits	  db '0123456789ABCDEF$'
-filename	  db 40 dup (1)
+textfilename	  db 40 dup (1)
 complement_toggle db 'inverted', 0
 buffer_toggle db 'offset:', 0
-filehandle	  dw 1 dup (0)
+textfilehandle	  dw 1 dup (0)
 file_offset	  db 1 dup (0)
 BYTES_PER_ROW equ 09h
 BYTES_PER_COL equ 0Ch
@@ -132,20 +132,20 @@ proc printLayout
 	ret
 endp printLayout
 
-proc openFile
+proc openTextFile
 	; Open file
 	mov ah, 3Dh
 	xor al, al
 
-	lea dx, [filename]
+	lea dx, [textfilename]
 	add dx, 2h
 
 	int 21h
 	jc openerror
-	mov [filehandle], ax
+	mov [textfilehandle], ax
 	openerror:
 	ret
-endp openFile
+endp openTextFile
 
 proc complementBuffer
 	xor cl, cl
@@ -161,7 +161,7 @@ endp complementBuffer
 
 proc seekFile
 	mov ax, 4200h
-	mov bx, filehandle
+	mov bx, textfilehandle
 	xor cx, cx
 	mov dl, [file_offset]
 	xor dh, dh
@@ -171,7 +171,7 @@ endp seekFile
 
 proc readFile
 	mov ah,3Fh
-	mov bx, [filehandle]
+	mov bx, [textfilehandle]
 	mov cx, 132
 	mov dx, offset buffer
 	int 21h
@@ -191,7 +191,7 @@ endp readFile
 
 proc closeFile
 	mov ah,3Eh
-	mov bx, [filehandle]
+	mov bx, [textfilehandle]
 	int 21h
 	ret
 endp closeFile
@@ -401,7 +401,7 @@ proc printToggles
 	push ON_COLOR
 	compl_end:
 
-	lea dx, [filename]
+	lea dx, [textfilename]
 	add dx, 2h
 	; push dx
 	push offset complement_toggle
@@ -425,20 +425,20 @@ proc printToggles
 	ret
 endp printToggles
 
-proc getFilename
-	mov dx, offset filename
+proc gettextfilename
+	mov dx, offset textfilename
 	mov bx, dx
 	mov [byte ptr bx], 50
 	mov ah, 0Ah
 	int 21h
 
-	mov bx, offset filename
+	mov bx, offset textfilename
 	inc bx
 	add bl, [byte ptr bx]
 	inc bx
 	mov [byte ptr bx], 0h
 	ret
-endp getFilename
+endp gettextfilename
 
 start:
 	; for string printing
@@ -448,7 +448,7 @@ start:
 
 	; jmp game_over
 
-	call getFilename
+	call gettextfilename
 	; set graphic mode
 	mov ax, 13h
 	int 10h
@@ -456,9 +456,9 @@ start:
 	call printLayout
 	game_loop:
 		call printToggles
-		call openFile
+		call openTextFile
 
-		cmp [filehandle], 00h
+		cmp [textfilehandle], 00h
 		je game_over
 
 		call seekFile
